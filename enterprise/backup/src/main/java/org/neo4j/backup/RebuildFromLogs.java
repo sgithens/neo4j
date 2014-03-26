@@ -82,7 +82,7 @@ class RebuildFromLogs
         LogExtractor extractor = null;
         try
         {
-            extractor = LogExtractor.from( FS, sourceDir, new Monitors().newMonitor( ByteCounterMonitor.class ) );
+            extractor = LogExtractor.from( FS, sourceDir, new Monitors().newMonitor( ByteCounterMonitor.class ), StringLogger.DEV_NULL );
             for ( InMemoryLogBuffer buffer = new InMemoryLogBuffer(); ; buffer.reset() )
             {
                 long txId = extractor.extractNext( buffer );

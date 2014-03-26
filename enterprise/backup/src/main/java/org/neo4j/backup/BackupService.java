@@ -120,6 +120,7 @@ class BackupService
             storeCopier.copyStore( new RemoteStoreCopier.StoreCopyRequester()
             {
                 private BackupClient client;
+
                 @Override
                 public Response<?> copyStore( StoreWriter writer )
                 {

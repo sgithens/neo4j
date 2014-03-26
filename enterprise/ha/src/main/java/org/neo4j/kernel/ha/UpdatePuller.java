@@ -21,6 +21,7 @@ package org.neo4j.kernel.ha;
 
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.neo4j.com.ComException;
 import org.neo4j.kernel.AvailabilityGuard;
@@ -41,6 +42,7 @@ public class UpdatePuller implements Lifecycle
     private final LastUpdateTime lastUpdateTime;
     private final Config config;
     private final StringLogger logger;
+    private final AtomicLong updateEpoch;
     private boolean pullUpdates = false;
     private ScheduledThreadPoolExecutor updatePuller;
 
@@ -57,14 +59,19 @@ public class UpdatePuller implements Lifecycle
         this.lastUpdateTime = lastUpdateTime;
         this.config = config;
         this.logger = logger;
+        this.updateEpoch = new AtomicLong();
     }
 
     public void pullUpdates()
     {
         if ( availabilityGuard.isAvailable( 5000 ) )
         {
+            long start = System.currentTimeMillis();
+            logger.info( "Pulling updates@" + updateEpoch.incrementAndGet() );
             xaDataSourceManager.applyTransactions(
                     master.pullUpdates( requestContextFactory.newRequestContext( txManager.getEventIdentifier() ) ) );
+            logger.info("Pulling updates at epoch " + updateEpoch.get() +
+                    " done, took " + ( System.currentTimeMillis() - start ) );
         }
         lastUpdateTime.setLastUpdateTime( System.currentTimeMillis() );
     }

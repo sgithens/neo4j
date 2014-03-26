@@ -36,9 +36,9 @@ public class CompareTxStreams
         Monitors monitors = new Monitors();
         compareLogStreams(
                 LogExtractor.from( fileSystem, new File(args[0]),
-                        monitors.newMonitor( ByteCounterMonitor.class, CompareTxStreams.class, "logExtractor1" ) ),
+                        monitors.newMonitor( ByteCounterMonitor.class, CompareTxStreams.class, "logExtractor1" ), StringLogger.DEV_NULL ),
                 LogExtractor.from( fileSystem, new File( args[1]),
-                        monitors.newMonitor( ByteCounterMonitor.class, CompareTxStreams.class, "logExtractor1" ) ));
+                        monitors.newMonitor( ByteCounterMonitor.class, CompareTxStreams.class, "logExtractor1" ), StringLogger.DEV_NULL ));
     }
 
     protected static void compareLogStreams( LogExtractor extractor1, LogExtractor extractor2 ) throws IOException

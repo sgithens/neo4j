@@ -974,7 +974,7 @@ public class XaLogicalLog implements LogLoader
 
     public LogExtractor getLogExtractor( long startTxId, long endTxIdHint ) throws IOException
     {
-        return new LogExtractor( positionCache, this, cf, startTxId, endTxIdHint );
+        return new LogExtractor( positionCache, this, cf, startTxId, endTxIdHint, msgLog );
     }
 
     public static final int MASTER_ID_REPRESENTING_NO_MASTER = -1;
@@ -1195,6 +1195,10 @@ public class XaLogicalLog implements LogLoader
 
         private void apply() throws IOException
         {
+            if ( commitEntry != null )
+            {
+                getStringLogger().info( "applying " + logEntries.size() + " entries for tx " + commitEntry.getTxId() );
+            }
             for ( LogEntry entry : logEntries )
             {
                 /*

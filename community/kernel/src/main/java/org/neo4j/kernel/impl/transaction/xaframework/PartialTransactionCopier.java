@@ -19,6 +19,8 @@
  */
 package org.neo4j.kernel.impl.transaction.xaframework;
 
+import static org.neo4j.kernel.impl.transaction.xaframework.LogExtractor.newLogReaderBuffer;
+
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
@@ -28,8 +30,6 @@ import org.neo4j.kernel.impl.nioneo.store.StoreChannel;
 import org.neo4j.kernel.impl.util.ArrayMap;
 import org.neo4j.kernel.impl.util.StringLogger;
 import org.neo4j.kernel.monitoring.ByteCounterMonitor;
-
-import static org.neo4j.kernel.impl.transaction.xaframework.LogExtractor.newLogReaderBuffer;
 
 /**
  * During log rotation, any unfinished transactions in the current log need to be copied over to the
@@ -109,7 +109,7 @@ class PartialTransactionCopier
 
     private LogEntry.Start fetchTransactionBulkFromLogExtractor( long txId, LogBuffer target ) throws IOException
     {
-        LogExtractor extractor = new LogExtractor( positionCache, logLoader, commandFactory, txId, txId );
+        LogExtractor extractor = new LogExtractor( positionCache, logLoader, commandFactory, txId, txId, log );
         InMemoryLogBuffer tempBuffer = new InMemoryLogBuffer();
         extractor.extractNext( tempBuffer );
         ByteBuffer localBuffer = newLogReaderBuffer();

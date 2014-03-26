@@ -42,6 +42,7 @@ import org.neo4j.kernel.impl.nioneo.store.StoreChannel;
 import org.neo4j.kernel.impl.nioneo.xa.Command;
 import org.neo4j.kernel.impl.transaction.xaframework.LogEntry.Start;
 import org.neo4j.kernel.impl.util.BufferedFileChannel;
+import org.neo4j.kernel.impl.util.StringLogger;
 import org.neo4j.kernel.monitoring.ByteCounterMonitor;
 
 public class LogExtractor
@@ -62,6 +63,7 @@ public class LogExtractor
     private LogEntry.Commit previousCommitEntry;
     private final long startTxId;
     private long nextExpectedTxId;
+    private final StringLogger logger;
     private int counter;
 
     private final LogPositionCache cache;
@@ -155,13 +157,14 @@ public class LogExtractor
     }
 
     public LogExtractor( LogPositionCache cache, LogLoader logLoader,
-            XaCommandFactory commandFactory, long startTxId, long endTxIdHint ) throws IOException
+            XaCommandFactory commandFactory, long startTxId, long endTxIdHint, StringLogger logger ) throws IOException
     {
         this.cache = cache;
         this.logLoader = logLoader;
         this.commandFactory = commandFactory;
         this.startTxId = startTxId;
         this.nextExpectedTxId = startTxId;
+        this.logger = logger;
         long diff = endTxIdHint-startTxId + 1/*since they are inclusive*/;
         if ( diff < CACHE_FIND_THRESHOLD )
         {   // Find it from cache, we must check with all the requested transactions
@@ -192,7 +195,11 @@ public class LogExtractor
         for ( long txId = startTxId; txId <= endTxIdHint; txId++ )
         {
             TxPosition position = cache.positionOf( txId );
-            if ( position == null ) return null;
+            if ( position == null )
+            {
+                logger.info( "Position cache missed for txId " + txId );
+                return null;
+            }
             if ( earliest == null || position.earlierThan( earliest ) )
             {
                 earliest = position;
@@ -520,26 +527,26 @@ public class LogExtractor
         }
     }
     
-    public static LogExtractor from( FileSystemAbstraction fileSystem, File storeDir, ByteCounterMonitor monitor ) throws IOException
+    public static LogExtractor from( FileSystemAbstraction fileSystem, File storeDir, ByteCounterMonitor monitor, StringLogger logger ) throws IOException
     {
-        return from( fileSystem, storeDir, NIONEO_COMMAND_FACTORY, monitor );
+        return from( fileSystem, storeDir, NIONEO_COMMAND_FACTORY, monitor, logger );
     }
     
     public static LogExtractor from( FileSystemAbstraction fileSystem, File storeDir, ByteCounterMonitor monitor,
-                                     long startTxId ) throws IOException
+                                     long startTxId, StringLogger logger ) throws IOException
     {
-        return from( fileSystem, storeDir, NIONEO_COMMAND_FACTORY, monitor, startTxId );
+        return from( fileSystem, storeDir, NIONEO_COMMAND_FACTORY, monitor, startTxId, logger );
     }
     
     public static LogExtractor from( FileSystemAbstraction fileSystem, File storeDir,
-            XaCommandFactory commandFactory, ByteCounterMonitor monitor ) throws IOException
+            XaCommandFactory commandFactory, ByteCounterMonitor monitor, StringLogger logger ) throws IOException
     {
         // 2 is a "magic" first tx :)
-        return from( fileSystem, storeDir, commandFactory, monitor, 2 );
+        return from( fileSystem, storeDir, commandFactory, monitor, 2, logger );
     }
     
     public static LogExtractor from( final FileSystemAbstraction fileSystem, final File storeDir,
-            XaCommandFactory commandFactory, final ByteCounterMonitor monitor, long startTxId ) throws IOException
+            XaCommandFactory commandFactory, final ByteCounterMonitor monitor, long startTxId, StringLogger logger ) throws IOException
     {
         LogLoader loader = new LogLoader()
         {
@@ -620,7 +627,7 @@ public class LogExtractor
             }
         };
         
-        return new LogExtractor( new LogPositionCache(), loader, commandFactory, startTxId, Long.MAX_VALUE );
+        return new LogExtractor( new LogPositionCache(), loader, commandFactory, startTxId, Long.MAX_VALUE, logger );
     }
     
     public static final XaCommandFactory NIONEO_COMMAND_FACTORY = new XaCommandFactory()

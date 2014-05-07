@@ -1,0 +1,38 @@
+h4 BioDrugNetwork
+.inner
+  h5 Single Item Search
+    input(type='text', ng-model='single1')
+    select(ng-model='singleType1')
+      option(value='Chemical {ChemicalID') Compound
+      option(value='Gene {Geneid') Gene
+      option(value='Disease {DiseaseID') Disease
+      option(value='Pathway {PathwayID') Pathway
+    input(type='button', value='search', ng-click="editor.execScript('match (n:'+singleType1+':\"'+single1+'\"})-[*0..5]-(x) RETURN x limit 25')")
+  h5 2 Item Path Search
+    input(type='text', ng-model='double1')
+    select(ng-model='doubleType1')
+      option(value='Chemical {ChemicalID') Compound
+      option(value='Gene {Geneid') Gene
+      option(value='Disease {DiseaseID') Disease
+      option(value='Pathway {PathwayID') Pathway
+    p -- 
+    input(type='text', ng-model='double2')
+    select(ng-model='doubleType2')
+      option(value='Chemical {ChemicalID') Compound
+      option(value='Gene {Geneid') Gene
+      option(value='Disease {DiseaseID') Disease
+      option(value='Pathway {PathwayID') Pathway
+    input(type='button', value='search', ng-click="editor.execScript('match (n:'+doubleType1+':\"'+double1+'\"})-[r*0..5]-(x:'+doubleType2+':\"'+double2+'\"}) RETURN n,r,x limit 25')")
+  h5 Tertiary Drug Search 
+    input(type='text')
+    select()
+      option(value='compound') Compound
+      option(value='gene') Gene
+    input(type='text')
+    select()
+      option(value='compound') Compound
+      option(value='gene') Gene
+    input(type='text')
+    select()
+      option(value='compound') Drug   
+    input(type='button', value='search')
